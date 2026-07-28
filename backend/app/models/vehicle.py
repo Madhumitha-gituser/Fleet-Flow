@@ -27,3 +27,4 @@ class Vehicle(Base):
         back_populates="vehicle"
     )
     trips = relationship("Trip", back_populates="vehicle")
+    maintenances = relationship("Maintenance", back_populates="vehicle")

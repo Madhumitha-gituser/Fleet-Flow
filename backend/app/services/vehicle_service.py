@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.driver import Driver
 from app.models.vehicle import Vehicle
-from app.schemas.vehicle import VehicleCreate, VehicleUpdate
+from app.schemas.vehicle import VehicleCreate, VehicleUpdate, VehicleStatusUpdate
 
 
 def create_vehicle(vehicle: VehicleCreate, db: Session):
@@ -121,6 +121,16 @@ def delete_vehicle(vehicle_id: int, db: Session):
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
 
+    # Never delete a vehicle that has maintenance history (preserves records per policy)
+    if vehicle.maintenances:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Vehicle {vehicle_id} has {len(vehicle.maintenances)} maintenance record(s). "
+                "Set status to 'Out of Service' instead of deleting to preserve history."
+            ),
+        )
+
     db.delete(vehicle)
     try:
         db.commit()
@@ -132,3 +142,37 @@ def delete_vehicle(vehicle_id: int, db: Session):
         ) from exc
 
     return {"message": "Vehicle deleted successfully"}
+
+
+# ---------------------------------------------------------------------------
+# Task 5 – Update vehicle status only
+# ---------------------------------------------------------------------------
+
+def update_vehicle_status(vehicle_id: int, payload: VehicleStatusUpdate, db: Session):
+    """
+    Patch **only** the status field of a vehicle.
+
+    Task 5 validations:
+      • Returns HTTP 404 when vehicle_id does not exist.
+      • Accepts only the four canonical status values defined in VehicleStatusUpdate.
+    """
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Vehicle with id {vehicle_id} not found.",
+        )
+
+    vehicle.status = payload.status
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not update vehicle status because of a database constraint.",
+        ) from exc
+
+    db.refresh(vehicle)
+    return vehicle
