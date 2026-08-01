@@ -28,3 +28,4 @@ class Vehicle(Base):
     )
     trips = relationship("Trip", back_populates="vehicle")
     maintenances = relationship("Maintenance", back_populates="vehicle")
+    assignments = relationship("DriverAssignment", back_populates="vehicle")

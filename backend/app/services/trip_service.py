@@ -32,6 +32,57 @@ def _is_active_status():
 
 
 # ---------------------------------------------------------------------------
+# Task 4: Map trip_status → Driver.status automatically
+# ---------------------------------------------------------------------------
+# Active trip statuses that keep the driver "On Trip":
+_ON_TRIP_STATUSES = {
+    TripStatus.ASSIGNED.value,
+    TripStatus.IN_TRANSIT.value,
+    # Per spec: "Picked Up", "Out for Delivery" are also "On Trip" but the
+    # current TripStatus enum only has Assigned / In Transit for active states.
+}
+
+# Statuses that release the driver back to "Available":
+_DONE_STATUSES = {
+    TripStatus.DELIVERED.value,
+    TripStatus.CANCELLED.value,
+}
+
+
+def _sync_driver_status_from_trip(trip: Trip, db: Session) -> None:
+    """Automatically update Driver.status based on the trip's current status.
+
+    Mapping (Task 4):
+      Trip Created  → driver stays as-is (assignment drives 'Assigned')
+      Trip Assigned → 'Assigned'   (but assignment creation also sets this)
+      Trip In Transit / Picked Up / Out for Delivery → 'On Trip'
+      Trip Delivered / Cancelled → 'Available'
+    """
+    driver = db.query(Driver).filter(Driver.id == trip.driver_id).first()
+    if not driver:
+        return
+
+    new_status: str | None = None
+    trip_status_val = trip.trip_status if isinstance(trip.trip_status, str) else trip.trip_status.value
+
+    if trip_status_val == TripStatus.ASSIGNED.value:
+        new_status = "Assigned"
+    elif trip_status_val == TripStatus.IN_TRANSIT.value:
+        new_status = "On Trip"
+    elif trip_status_val in _DONE_STATUSES:
+        new_status = "Available"
+    # TripStatus.CREATED — no automatic override; leave driver status alone
+
+    if new_status and driver.status != new_status:
+        logger.info(
+            "_sync_driver_status_from_trip — driver id=%d status %s → %s",
+            driver.id, driver.status, new_status,
+        )
+        driver.status = new_status
+        db.add(driver)
+
+
+# ---------------------------------------------------------------------------
 # CRUD operations
 # ---------------------------------------------------------------------------
 
@@ -105,6 +156,11 @@ def create_trip(trip: TripCreate, db: Session):
         destination_longitude=destination_coords["longitude"],
     )
     db.add(new_trip)
+    db.flush()  # flush so new_trip.id is available for _sync
+
+    # Task 4: sync driver status after trip creation
+    _sync_driver_status_from_trip(new_trip, db)
+
     db.commit()
     db.refresh(new_trip)
     logger.info(
@@ -187,6 +243,9 @@ def update_trip(trip_id: int, trip_data: TripUpdate, db: Session):
     # Apply all scalar fields from the update payload
     for key, value in trip_data.model_dump().items():
         setattr(db_trip, key, value)
+
+    # Task 4: sync driver status after trip update (catches status changes)
+    _sync_driver_status_from_trip(db_trip, db)
 
     db.commit()
     db.refresh(db_trip)

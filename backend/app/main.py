@@ -8,6 +8,8 @@ from app.routers import auth, driver, vehicle, trip, users
 from app.routers.shipment import router as shipment_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.maintenance import router as maintenance_router
+from app.routers.driver_assignment import router as driver_assignment_router
+from app.routers.driver_attendance import router as driver_attendance_router
 from app.websocket.router import router as ws_router
 
 # ---------------------------------------------------------------------------
@@ -120,6 +122,8 @@ app.include_router(trip.router)
 app.include_router(users.router)
 app.include_router(dashboard_router)
 app.include_router(maintenance_router)
+app.include_router(driver_assignment_router)
+app.include_router(driver_attendance_router)
 app.include_router(ws_router)
 
 
