@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import api, { getApiErrorMessage } from '../services/api'
+import api, { dashboardService, getApiErrorMessage } from '../services/api'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts'
 import { 
   Truck, 
   Users, 
@@ -9,7 +20,9 @@ import {
   Plus, 
   UserPlus, 
   ArrowRight,
-  AlertTriangle
+  Fuel,
+  AlertTriangle,
+  BarChart2,
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -24,6 +37,7 @@ export default function Dashboard() {
     vehicles: [],
     shipments: [],
   })
+  const [fleet, setFleet] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -47,8 +61,9 @@ export default function Dashboard() {
       setLoading(true)
       setError('')
 
-      const [summaryRes, driversRes, shipmentsRes] = await Promise.all([
-        api.get('/dashboard/summary'),
+      const [summaryRes, fleetRes, driversRes, shipmentsRes] = await Promise.all([
+        dashboardService.getSummary(),
+        dashboardService.getFleet(),
         api.get('/drivers/'),
         api.get('/shipments/'),
       ])
@@ -59,6 +74,7 @@ export default function Dashboard() {
         delivered_shipments: 0,
         delayed_shipments: 0,
       })
+      setFleet(fleetRes.data || null)
 
       setData({
         drivers: driversRes.data || [],
@@ -232,6 +248,10 @@ export default function Dashboard() {
                 <UserPlus className="btn-icon" style={{ color: 'var(--warning)' }} />
                 <span>Register Driver</span>
               </Link>
+              <Link to="/fuel-records" className="btn btn--secondary" style={{ justifyContent: 'flex-start', textDecoration: 'none' }}>
+                <Fuel className="btn-icon" style={{ color: 'var(--primary)' }} />
+                <span>Fuel Records</span>
+              </Link>
             </div>
           </section>
 
@@ -266,6 +286,41 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {fleet && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h2 className="section-title" style={{ fontSize: '16px' }}>Fleet Performance</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                Live fleet totals — vehicles, drivers, and trips at a glance.
+              </p>
+            </div>
+            <Link
+              to="/analytics"
+              className="btn btn--secondary"
+              style={{ padding: '6px 14px', fontSize: '12px', textDecoration: 'none' }}
+            >
+              <BarChart2 style={{ width: '14px', height: '14px' }} />
+              <span>Full Analytics</span>
+              <ArrowRight style={{ width: '13px', height: '13px' }} />
+            </Link>
+          </div>
+
+
+          {/* Shipment KPI cards row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
+            {[
+              ['Active Shipments', fleet.active_shipments],
+            ].map(([label, value]) => (
+              <div key={label} className="card" style={{ padding: '16px' }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>{label}</p>
+                <strong style={{ fontSize: '26px', color: 'var(--text-main)' }}>{value ?? 0}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

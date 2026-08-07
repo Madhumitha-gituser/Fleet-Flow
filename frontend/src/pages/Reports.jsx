@@ -1,14 +1,29 @@
 import { useEffect, useState } from 'react'
-import api, { getApiErrorMessage } from '../services/api'
+import api, { analyticsService, getApiErrorMessage } from '../services/api'
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
 import { 
   Download, 
   Printer, 
+  CheckCircle2,
   TrendingUp, 
   Users, 
   Wrench, 
   Package, 
   Activity, 
-  AlertTriangle
+  AlertTriangle,
+  BarChart2,
 } from 'lucide-react'
 
 export default function Reports() {
@@ -16,6 +31,14 @@ export default function Reports() {
     drivers: [],
     vehicles: [],
     shipments: [],
+  })
+  const [operations, setOperations] = useState({
+    total_deliveries: 0,
+    successful_deliveries: 0,
+    delayed_deliveries: 0,
+    cancelled_deliveries: 0,
+    average_trip_distance: 0,
+    average_delivery_time: 0,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -28,15 +51,24 @@ export default function Reports() {
     try {
       setLoading(true)
       setError('')
-      const [driversRes, vehiclesRes, shipmentsRes] = await Promise.all([
+      const [driversRes, vehiclesRes, shipmentsRes, operationsRes] = await Promise.all([
         api.get('/drivers/'),
         api.get('/vehicles/'),
         api.get('/shipments/'),
+        analyticsService.getOperations(),
       ])
       setData({
         drivers: driversRes.data || [],
         vehicles: vehiclesRes.data || [],
         shipments: shipmentsRes.data || [],
+      })
+      setOperations(operationsRes.data || {
+        total_deliveries: 0,
+        successful_deliveries: 0,
+        delayed_deliveries: 0,
+        cancelled_deliveries: 0,
+        average_trip_distance: 0,
+        average_delivery_time: 0,
       })
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to fetch directory items to generate reports.'))
@@ -65,6 +97,12 @@ export default function Reports() {
       ['Generated On', new Date().toLocaleString()],
       [],
       ['Operational Metric', 'Value', 'Percentage (%)'],
+      ['Total Deliveries', operations.total_deliveries, '-'],
+      ['Successful Deliveries', operations.successful_deliveries, '-'],
+      ['Delayed Deliveries', operations.delayed_deliveries, '-'],
+      ['Cancelled Deliveries', operations.cancelled_deliveries, '-'],
+      ['Average Trip Distance', Number(operations.average_trip_distance || 0).toFixed(2), '-'],
+      ['Average Delivery Time', Number(operations.average_delivery_time || 0).toFixed(2), '-'],
       ['Total Drivers Registered', totalDrivers, '-'],
       ['Total Vehicles Fleet Size', totalVehicles, '-'],
       ['Available Vehicles', availableVehicles, `${totalVehicles ? ((availableVehicles / totalVehicles) * 100).toFixed(1) : 0}%`],

@@ -117,6 +117,108 @@ export const shipmentService = {
   },
 }
 
+export const fuelRecordService = {
+  getAll() {
+    return api.get('/fuel-records/')
+  },
+  getById(id) {
+    return api.get(`/fuel-records/${id}`)
+  },
+  create(payload) {
+    return api.post('/fuel-records/', payload)
+  },
+  update(id, payload) {
+    return api.put(`/fuel-records/${id}`, payload)
+  },
+  remove(id) {
+    return api.delete(`/fuel-records/${id}`)
+  },
+  getAnalytics() {
+    return api.get('/analytics/fuel')
+  },
+}
+
+export const maintenanceService = {
+  getAll() {
+    return api.get('/maintenance/')
+  },
+  getById(id) {
+    return api.get(`/maintenance/${id}`)
+  },
+  getByVehicle(vehicleId) {
+    return api.get(`/maintenance/vehicle/${vehicleId}`)
+  },
+  getByVehicleRecord(vehicleId, maintenanceId) {
+    return api.get(`/maintenance/vehicle/${vehicleId}/${maintenanceId}`)
+  },
+  create(payload) {
+    return api.post('/maintenance/', payload)
+  },
+  update(id, payload) {
+    return api.put(`/maintenance/${id}`, payload)
+  },
+  cancel(id) {
+    return api.patch(`/maintenance/${id}/cancel`)
+  },
+}
+
+export const driverAssignmentService = {
+  getAll() {
+    return api.get('/driver-assignments/')
+  },
+  getById(id) {
+    return api.get(`/driver-assignments/${id}`)
+  },
+  create(payload) {
+    return api.post('/driver-assignments/', payload)
+  },
+  update(id, payload) {
+    return api.put(`/driver-assignments/${id}`, payload)
+  },
+  remove(id) {
+    return api.delete(`/driver-assignments/${id}`)
+  },
+}
+
+export const driverAttendanceService = {
+  getAll() {
+    return api.get('/driver-attendance/')
+  },
+  getById(id) {
+    return api.get(`/driver-attendance/${id}`)
+  },
+  create(payload) {
+    return api.post('/driver-attendance/', payload)
+  },
+  update(id, payload) {
+    return api.put(`/driver-attendance/${id}`, payload)
+  },
+  remove(id) {
+    return api.delete(`/driver-attendance/${id}`)
+  },
+}
+
+export const driverPerformanceService = {
+  getByDriverId(driverId) {
+    return api.get(`/drivers/${driverId}/performance`)
+  },
+}
+
+export const analyticsService = {
+  getOperations() {
+    return api.get('/analytics/operations')
+  },
+}
+
+export const dashboardService = {
+  getSummary() {
+    return api.get('/dashboard/summary')
+  },
+  getFleet() {
+    return api.get('/dashboard/fleet')
+  },
+}
+
 export const tripService = {
   getAll() {
     return api.get('/trips/')
@@ -152,6 +254,13 @@ export const userService = {
     return api.delete(`/users/${id}`)
   },
 }
+
+export const auditLogService = {
+  getAll(params) {
+    return api.get('/audit-logs/', { params })
+  },
+}
+
 
 
 

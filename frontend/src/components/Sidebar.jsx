@@ -7,11 +7,15 @@ import {
   Package, 
   Wrench, 
   BarChart3, 
+  BarChart2,
   User, 
   LogOut,
   Shield,
   Compass,
-  Search
+  Search,
+  Fuel,
+  ClipboardList,
+  Route
 } from "lucide-react";
 
 const navigationItems = [
@@ -23,9 +27,14 @@ const navigationItems = [
   { to: "/tracking", label: "Track Cargo", icon: Search, roles: ["Admin", "Fleet Manager", "Dispatcher", "Driver"] },
   { to: "/trips", label: "Trips", icon: Compass, roles: ["Admin", "Dispatcher", "Driver"] },
   { to: "/maintenance", label: "Maintenance", icon: Wrench, roles: ["Admin", "Fleet Manager"] },
+  { to: "/operations", label: "Driver Ops", icon: Users, roles: ["Admin", "Fleet Manager"] },
+  { to: "/fuel-records", label: "Fuel Records", icon: Fuel, roles: ["Admin", "Fleet Manager", "Dispatcher", "Driver"] },
   { to: "/reports", label: "Reports", icon: BarChart3, roles: ["Admin", "Fleet Manager"] },
+  { to: "/analytics", label: "Fleet Analytics", icon: BarChart2, roles: ["Admin", "Fleet Manager"] },
+  { to: "/audit-logs", label: "Audit Logs", icon: ClipboardList, roles: ["Admin", "Fleet Manager"] },
   { to: "/profile", label: "Profile", icon: User, roles: ["Admin", "Fleet Manager", "Dispatcher", "Driver"] },
 ];
+
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -53,9 +62,7 @@ export default function Sidebar() {
       {/* Brand Header */}
       <div className="sidebar__brand">
         <div className="sidebar__logo-container" aria-hidden="true">
-          <svg className="sidebar__logo-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0-3h16M24 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-          </svg>
+          <Route className="sidebar__logo-svg" />
         </div>
         <div className="sidebar__brandText">
           <h1 className="sidebar__title">FleetFlow</h1>

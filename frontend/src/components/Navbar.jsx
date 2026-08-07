@@ -11,6 +11,8 @@ const pageTitles = {
   '/shipments': 'Shipments',
   '/trips': 'Trips & Assignments',
   '/maintenance': 'Maintenance',
+  '/operations': 'Driver Operations',
+  '/fuel-records': 'Fuel Records',
   '/reports': 'Reports',
   '/profile': 'Profile',
   '/403': 'Access Denied',

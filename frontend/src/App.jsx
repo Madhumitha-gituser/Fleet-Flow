@@ -7,12 +7,16 @@ import Drivers from './pages/Drivers'
 import Vehicles from './pages/Vehicles'
 import Shipments from './pages/Shipments'
 import Maintenance from './pages/Maintenance'
+import DriverOperations from './pages/DriverOperations'
 import Reports from './pages/Reports'
+import FuelRecords from './pages/FuelRecords'
 import Profile from './pages/Profile'
 import Users from './pages/Users'
 import Trips from './pages/Trips'
 import Tracking from './pages/Tracking'
 import AccessDenied from './pages/AccessDenied'
+import FleetAnalytics from './pages/FleetAnalytics'
+import AuditLogs from './pages/AuditLogs'
 
 export default function App() {
   return (
@@ -29,7 +33,14 @@ export default function App() {
             <Route path="/drivers" element={<Drivers />} />
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/maintenance" element={<Maintenance />} />
+            <Route path="/operations" element={<DriverOperations />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/analytics" element={<FleetAnalytics />} />
+            <Route path="/audit-logs" element={<AuditLogs />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['Admin', 'Fleet Manager', 'Dispatcher', 'Driver']} />}>
+            <Route path="/fuel-records" element={<FuelRecords />} />
           </Route>
           
           <Route element={<ProtectedRoute allowedRoles={['Admin', 'Dispatcher']} />}>
@@ -53,4 +64,5 @@ export default function App() {
     </Routes>
   )
 }
+
 
