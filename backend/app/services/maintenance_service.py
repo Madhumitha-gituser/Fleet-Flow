@@ -11,15 +11,17 @@ Tasks covered
 • Policy  – Maintenance history is NEVER physically deleted.
              Hard-delete is replaced by a `cancel_maintenance` soft-archive.
 """
-from datetime import datetime
+from datetime import date, datetime
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.maintenance import Maintenance, MaintenanceStatus
 from app.models.vehicle import Vehicle
 from app.schemas.maintenance import MaintenanceCreate, MaintenanceUpdate
+from app.schemas.maintenance_alert import MaintenanceReportResponse
 
 
 # ---------------------------------------------------------------------------
@@ -246,3 +248,51 @@ def cancel_maintenance(maintenance_id: int, db: Session) -> Maintenance:
 
     db.refresh(db_record)
     return db_record
+
+
+def get_maintenance_report(db: Session) -> MaintenanceReportResponse:
+    total_maintenance_records = db.query(func.count(Maintenance.id)).scalar() or 0
+
+    vehicles_under_maintenance = (
+        db.query(func.count(func.distinct(Maintenance.vehicle_id)))
+        .filter(Maintenance.status == MaintenanceStatus.IN_PROGRESS)
+        .scalar()
+        or 0
+    )
+
+    completed_services = (
+        db.query(func.count(Maintenance.id))
+        .filter(Maintenance.status == MaintenanceStatus.COMPLETED)
+        .scalar()
+        or 0
+    )
+
+    today = date.today()
+    overdue_services = (
+        db.query(func.count(Maintenance.id))
+        .filter(
+            Maintenance.next_service_date.isnot(None),
+            Maintenance.next_service_date < today,
+            Maintenance.status.notin_([MaintenanceStatus.COMPLETED, MaintenanceStatus.CANCELLED]),
+        )
+        .scalar()
+        or 0
+    )
+
+    total_cost = db.query(func.coalesce(func.sum(Maintenance.service_cost), 0.0)).scalar() or 0.0
+
+    frequent_category_row = (
+        db.query(Maintenance.category, func.count(Maintenance.id).label("category_count"))
+        .group_by(Maintenance.category)
+        .order_by(func.count(Maintenance.id).desc())
+        .first()
+    )
+
+    return MaintenanceReportResponse(
+        total_maintenance_records=int(total_maintenance_records),
+        vehicles_under_maintenance=int(vehicles_under_maintenance),
+        completed_services=int(completed_services),
+        overdue_services=int(overdue_services),
+        total_maintenance_cost=round(float(total_cost), 2),
+        most_frequent_maintenance_category=str(frequent_category_row.category) if frequent_category_row else None,
+    )

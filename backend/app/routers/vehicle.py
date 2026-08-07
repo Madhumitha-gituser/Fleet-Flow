@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate, VehicleResponse, VehicleStatusUpdate
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 from app.services.vehicle_service import (
     create_vehicle,
     get_all_vehicles,
@@ -52,7 +53,9 @@ def add_vehicle(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return create_vehicle(vehicle, db)
+    res = create_vehicle(vehicle, db)
+    log_action(db, action="CREATE", resource="Vehicle", resource_id=res.id, details=f"Created vehicle {res.vehicle_number} ({res.vehicle_type})", user=current_user)
+    return res
 
 
 @router.get(
@@ -102,7 +105,9 @@ def edit_vehicle(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return update_vehicle(vehicle_id, vehicle, db)
+    res = update_vehicle(vehicle_id, vehicle, db)
+    log_action(db, action="UPDATE", resource="Vehicle", resource_id=res.id, details=f"Updated vehicle {res.vehicle_number} details", user=current_user)
+    return res
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +139,9 @@ def patch_vehicle_status(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return update_vehicle_status(vehicle_id, payload, db)
+    res = update_vehicle_status(vehicle_id, payload, db)
+    log_action(db, action="UPDATE", resource="Vehicle", resource_id=res.id, details=f"Updated status of vehicle {res.vehicle_number} to {payload.status}", user=current_user)
+    return res
 
 
 @router.delete(
@@ -152,4 +159,6 @@ def remove_vehicle(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return delete_vehicle(vehicle_id, db)
+    res = delete_vehicle(vehicle_id, db)
+    log_action(db, action="DELETE", resource="Vehicle", resource_id=vehicle_id, details=f"Deleted vehicle with ID {vehicle_id}", user=current_user)
+    return res

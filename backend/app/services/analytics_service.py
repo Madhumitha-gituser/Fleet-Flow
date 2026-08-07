@@ -1,6 +1,5 @@
 import math
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from app.models.shipment import Shipment, ShipmentStatus
 from app.models.trip import Trip

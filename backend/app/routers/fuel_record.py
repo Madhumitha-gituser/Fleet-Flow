@@ -10,6 +10,7 @@ from app.schemas.fuel_record import (
 )
 from app.services import fuel_record_service
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 
 router = APIRouter(
     prefix="/fuel-records",
@@ -48,7 +49,9 @@ def add_fuel_record(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(ALLOWED_ROLES_WRITE)),
 ):
-    return fuel_record_service.create_fuel_record(payload, db)
+    res = fuel_record_service.create_fuel_record(payload, db)
+    log_action(db, action="CREATE", resource="FuelRecord", resource_id=res.id, details=f"Logged {res.fuel_quantity}L fuel costing ₹{res.fuel_cost} for vehicle ID {res.vehicle_id}", user=current_user)
+    return res
 
 
 @router.get(
@@ -96,7 +99,9 @@ def update_fuel_record(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(ALLOWED_ROLES_WRITE)),
 ):
-    return fuel_record_service.update_fuel_record(record_id, payload, db)
+    res = fuel_record_service.update_fuel_record(record_id, payload, db)
+    log_action(db, action="UPDATE", resource="FuelRecord", resource_id=res.id, details=f"Updated fuel record ID {res.id} for vehicle ID {res.vehicle_id}", user=current_user)
+    return res
 
 
 @router.delete(
@@ -109,4 +114,6 @@ def delete_fuel_record(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(ALLOWED_ROLES_WRITE)),
 ):
-    return fuel_record_service.delete_fuel_record(record_id, db)
+    res = fuel_record_service.delete_fuel_record(record_id, db)
+    log_action(db, action="DELETE", resource="FuelRecord", resource_id=record_id, details=f"Deleted fuel record with ID {record_id}", user=current_user)
+    return res

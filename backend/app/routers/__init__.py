@@ -6,5 +6,6 @@ from . import trip
 from . import users
 from . import dashboard
 from . import maintenance
+from . import maintenance_alerts
 from . import driver_assignment
 from . import driver_attendance

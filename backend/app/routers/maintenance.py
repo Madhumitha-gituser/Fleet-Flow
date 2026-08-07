@@ -24,6 +24,7 @@ from app.schemas.maintenance import (
 )
 from app.services import maintenance_service
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 
 router = APIRouter(
     prefix="/maintenance",
@@ -67,7 +68,9 @@ def create_maintenance(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return maintenance_service.create_maintenance(payload, db)
+    res = maintenance_service.create_maintenance(payload, db)
+    log_action(db, action="CREATE", resource="Maintenance", resource_id=res.id, details=f"Created maintenance record for vehicle ID {res.vehicle_id} (Category: {res.category.value if hasattr(res.category, 'value') else res.category})", user=current_user)
+    return res
 
 
 @router.get(
@@ -120,7 +123,9 @@ def update_maintenance(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return maintenance_service.update_maintenance(maintenance_id, payload, db)
+    res = maintenance_service.update_maintenance(maintenance_id, payload, db)
+    log_action(db, action="UPDATE", resource="Maintenance", resource_id=res.id, details=f"Updated maintenance record status to {res.status.value if hasattr(res.status, 'value') else res.status}", user=current_user)
+    return res
 
 
 # ---------------------------------------------------------------------------
@@ -146,7 +151,9 @@ def cancel_maintenance(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return maintenance_service.cancel_maintenance(maintenance_id, db)
+    res = maintenance_service.cancel_maintenance(maintenance_id, db)
+    log_action(db, action="UPDATE", resource="Maintenance", resource_id=res.id, details="Cancelled maintenance record", user=current_user)
+    return res
 
 
 # ---------------------------------------------------------------------------

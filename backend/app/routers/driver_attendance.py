@@ -11,6 +11,7 @@ from app.schemas.driver_attendance import (
 )
 from app.services import driver_attendance_service
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 
 router = APIRouter(
     prefix="/driver-attendance",
@@ -44,7 +45,9 @@ def add_attendance(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return driver_attendance_service.create_attendance(payload, db)
+    res = driver_attendance_service.create_attendance(payload, db)
+    log_action(db, action="CREATE", resource="DriverAttendance", resource_id=res.id, details=f"Logged attendance for driver ID {res.driver_id} on {res.date} as {res.attendance_status.value if hasattr(res.attendance_status, 'value') else res.attendance_status}", user=current_user)
+    return res
 
 
 @router.get(
@@ -88,7 +91,9 @@ def edit_attendance(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return driver_attendance_service.update_attendance(id, payload, db)
+    res = driver_attendance_service.update_attendance(id, payload, db)
+    log_action(db, action="UPDATE", resource="DriverAttendance", resource_id=res.id, details=f"Updated attendance ID {res.id} status to {res.attendance_status.value if hasattr(res.attendance_status, 'value') else res.attendance_status}", user=current_user)
+    return res
 
 
 @router.delete(
@@ -100,4 +105,6 @@ def remove_attendance(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return driver_attendance_service.delete_attendance(id, db)
+    res = driver_attendance_service.delete_attendance(id, db)
+    log_action(db, action="DELETE", resource="DriverAttendance", resource_id=id, details=f"Deleted attendance record with ID {id}", user=current_user)
+    return res

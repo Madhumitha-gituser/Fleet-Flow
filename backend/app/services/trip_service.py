@@ -10,6 +10,7 @@ from app.models.driver import Driver
 from app.models.vehicle import Vehicle
 from app.schemas.trip import TripCreate, TripUpdate
 from app.services.geocoding_service import geocode_location
+from app.services.workflow_rules import ensure_driver_available, ensure_vehicle_available
 
 logger = logging.getLogger("fleetflow.trip_service")
 
@@ -106,15 +107,11 @@ def create_trip(trip: TripCreate, db: Session):
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
-    # Verify driver exists
-    driver = db.query(Driver).filter(Driver.id == trip.driver_id).first()
-    if not driver:
-        raise HTTPException(status_code=404, detail="Driver not found")
+    # Verify driver exists and is eligible for assignment
+    driver = ensure_driver_available(trip.driver_id, db)
 
-    # Verify vehicle exists
-    vehicle = db.query(Vehicle).filter(Vehicle.id == trip.vehicle_id).first()
-    if not vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
+    # Verify vehicle exists and is not under maintenance
+    vehicle = ensure_vehicle_available(trip.vehicle_id, db)
 
     # Verify driver does not already have an active trip
     active_driver_trip = db.query(Trip).filter(
@@ -182,15 +179,11 @@ def update_trip(trip_id: int, trip_data: TripUpdate, db: Session):
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
-    # Verify driver exists
-    driver = db.query(Driver).filter(Driver.id == trip_data.driver_id).first()
-    if not driver:
-        raise HTTPException(status_code=404, detail="Driver not found")
+    # Verify driver exists and is eligible for assignment
+    driver = ensure_driver_available(trip_data.driver_id, db)
 
-    # Verify vehicle exists
-    vehicle = db.query(Vehicle).filter(Vehicle.id == trip_data.vehicle_id).first()
-    if not vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
+    # Verify vehicle exists and is not under maintenance
+    vehicle = ensure_vehicle_available(trip_data.vehicle_id, db)
 
     # Verify driver does not have another active trip (excluding this one)
     active_driver_trip = db.query(Trip).filter(

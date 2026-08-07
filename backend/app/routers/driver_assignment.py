@@ -11,6 +11,7 @@ from app.schemas.driver_assignment import (
 )
 from app.services import driver_assignment_service
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 
 router = APIRouter(
     prefix="/driver-assignments",
@@ -45,7 +46,9 @@ def add_assignment(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return driver_assignment_service.create_assignment(payload, db)
+    res = driver_assignment_service.create_assignment(payload, db)
+    log_action(db, action="CREATE", resource="DriverAssignment", resource_id=res.id, details=f"Assigned driver ID {res.driver_id} to vehicle ID {res.vehicle_id}", user=current_user)
+    return res
 
 
 @router.get(
@@ -91,7 +94,9 @@ def edit_assignment(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return driver_assignment_service.update_assignment(assignment_id, payload, db)
+    res = driver_assignment_service.update_assignment(assignment_id, payload, db)
+    log_action(db, action="UPDATE", resource="DriverAssignment", resource_id=res.id, details=f"Updated assignment ID {res.id} status to {res.assignment_status.value if hasattr(res.assignment_status, 'value') else res.assignment_status}", user=current_user)
+    return res
 
 
 @router.delete(
@@ -103,4 +108,6 @@ def remove_assignment(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return driver_assignment_service.delete_assignment(assignment_id, db)
+    res = driver_assignment_service.delete_assignment(assignment_id, db)
+    log_action(db, action="DELETE", resource="DriverAssignment", resource_id=assignment_id, details=f"Deleted driver assignment with ID {assignment_id}", user=current_user)
+    return res

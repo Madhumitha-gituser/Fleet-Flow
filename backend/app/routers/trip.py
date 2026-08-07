@@ -10,6 +10,7 @@ from app.services.geocoding_service import geocode_location
 from app.services.route_service import generate_route
 from app.services import eta_service
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 from app.models.driver import Driver
 from app.models.trip import Trip
 
@@ -29,7 +30,9 @@ def get_db():
 
 @router.post("/", response_model=TripResponse, status_code=status.HTTP_201_CREATED)
 def add_trip(trip: TripCreate, db: Session = Depends(get_db), current_user = Depends(has_role(["Admin", "Dispatcher"]))):
-    return trip_service.create_trip(trip, db)
+    res = trip_service.create_trip(trip, db)
+    log_action(db, action="CREATE", resource="Trip", resource_id=res.id, details=f"Created trip from {res.pickup_location} to {res.destination}", user=current_user)
+    return res
 
 
 @router.get("/", response_model=List[TripResponse])
@@ -54,12 +57,16 @@ def fetch_trip(id: int, db: Session = Depends(get_db), current_user = Depends(ha
 
 @router.put("/{id}", response_model=TripResponse)
 def edit_trip(id: int, trip: TripUpdate, db: Session = Depends(get_db), current_user = Depends(has_role(["Admin", "Dispatcher"]))):
-    return trip_service.update_trip(id, trip, db)
+    res = trip_service.update_trip(id, trip, db)
+    log_action(db, action="UPDATE", resource="Trip", resource_id=res.id, details=f"Updated trip {res.id} status to {res.status.value if hasattr(res.status, 'value') else res.status}", user=current_user)
+    return res
 
 
 @router.delete("/{id}")
 def remove_trip(id: int, db: Session = Depends(get_db), current_user = Depends(has_role(["Admin", "Dispatcher"]))):
-    return trip_service.delete_trip(id, db)
+    res = trip_service.delete_trip(id, db)
+    log_action(db, action="DELETE", resource="Trip", resource_id=id, details=f"Deleted trip with ID {id}", user=current_user)
+    return res
 
 
 @router.get("/{trip_id}/route")

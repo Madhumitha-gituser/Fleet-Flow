@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models.shipment import Shipment, ShipmentStatus
+from app.models.shipment import Shipment
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
 from app.models.trip import Trip
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 from app.services import eta_service
 from app.schemas.shipment import (
     ShipmentCreate,
@@ -74,6 +75,7 @@ def add_shipment(
     db.add(db_shipment)
     db.commit()
     db.refresh(db_shipment)
+    log_action(db, action="CREATE", resource="Shipment", resource_id=db_shipment.id, details=f"Created shipment with tracking number {db_shipment.tracking_number} to {db_shipment.delivery_location}", user=current_user)
 
     return db_shipment
 
@@ -198,6 +200,7 @@ def edit_shipment(
 
     db.commit()
     db.refresh(db_shipment)
+    log_action(db, action="UPDATE", resource="Shipment", resource_id=db_shipment.id, details=f"Updated shipment {db_shipment.tracking_number} status to {db_shipment.current_status.value if hasattr(db_shipment.current_status, 'value') else db_shipment.current_status}", user=current_user)
 
     # -----------------------------------------------------------------------
     # Broadcast real-time status update to all WebSocket clients watching
@@ -236,4 +239,5 @@ def remove_shipment(
 
     db.delete(db_shipment)
     db.commit()
+    log_action(db, action="DELETE", resource="Shipment", resource_id=id, details=f"Deleted shipment with ID {id}", user=current_user)
     return {"message": "Shipment deleted successfully"}

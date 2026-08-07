@@ -7,6 +7,7 @@ from app.database import SessionLocal
 from app.schemas.driver import DriverCreate, DriverUpdate, DriverResponse
 from app.schemas.driver_performance import DriverPerformanceResponse
 from app.utils.security import has_role
+from app.utils.audit_log import log_action
 from app.services.driver_service import (
     create_driver,
     get_all_drivers,
@@ -36,7 +37,9 @@ def add_driver(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return create_driver(driver, db)
+    res = create_driver(driver, db)
+    log_action(db, action="CREATE", resource="Driver", resource_id=res.id, details=f"Created driver {res.name} (License: {res.license_number})", user=current_user)
+    return res
 
 
 @router.get("/", response_model=List[DriverResponse])
@@ -88,7 +91,9 @@ def edit_driver(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return update_driver(driver_id, driver, db)
+    res = update_driver(driver_id, driver, db)
+    log_action(db, action="UPDATE", resource="Driver", resource_id=res.id, details=f"Updated driver {res.name} details", user=current_user)
+    return res
 
 
 @router.delete("/{driver_id}")
@@ -97,4 +102,6 @@ def remove_driver(
     db: Session = Depends(get_db),
     current_user=Depends(has_role(["Admin", "Fleet Manager"])),
 ):
-    return delete_driver(driver_id, db)
+    res = delete_driver(driver_id, db)
+    log_action(db, action="DELETE", resource="Driver", resource_id=driver_id, details=f"Deleted driver with ID {driver_id}", user=current_user)
+    return res

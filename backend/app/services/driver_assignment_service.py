@@ -1,14 +1,13 @@
 import logging
-from datetime import date
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.driver import Driver
-from app.models.vehicle import Vehicle
 from app.models.trip import Trip
 from app.models.driver_assignment import DriverAssignment, AssignmentStatus
 from app.schemas.driver_assignment import DriverAssignmentCreate, DriverAssignmentUpdate
+from app.services.workflow_rules import ensure_driver_available, ensure_vehicle_available
 
 logger = logging.getLogger("fleetflow.driver_assignment_service")
 
@@ -60,14 +59,10 @@ def _get_active_assignment_for_vehicle(vehicle_id: int, db: Session, exclude_id:
 
 def create_assignment(payload: DriverAssignmentCreate, db: Session):
     # 1 – Verify driver exists
-    driver = db.query(Driver).filter(Driver.id == payload.driver_id).first()
-    if not driver:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+    driver = ensure_driver_available(payload.driver_id, db)
 
     # 2 – Verify vehicle exists
-    vehicle = db.query(Vehicle).filter(Vehicle.id == payload.vehicle_id).first()
-    if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+    ensure_vehicle_available(payload.vehicle_id, db)
 
     # 3 – Verify trip exists (only when trip_id is provided)
     if payload.trip_id is not None:
@@ -141,14 +136,10 @@ def update_assignment(assignment_id: int, payload: DriverAssignmentUpdate, db: S
     old_driver_id = db_assignment.driver_id
 
     # 1 – Verify driver exists
-    driver = db.query(Driver).filter(Driver.id == payload.driver_id).first()
-    if not driver:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+    driver = ensure_driver_available(payload.driver_id, db)
 
     # 2 – Verify vehicle exists
-    vehicle = db.query(Vehicle).filter(Vehicle.id == payload.vehicle_id).first()
-    if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+    ensure_vehicle_available(payload.vehicle_id, db)
 
     # 3 – Verify trip exists (only when trip_id is provided)
     if payload.trip_id is not None:

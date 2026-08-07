@@ -6,6 +6,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
+from app.models.fuel_record import FuelRecord
+from app.models.maintenance import Maintenance
 from app.models.shipment import Shipment, ShipmentStatus
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
@@ -116,16 +118,22 @@ def get_fleet_dashboard(
     )
     assigned_drivers = (
         db.query(func.count(Driver.id))
-        .filter(func.lower(Driver.status).in_(["busy", "assigned", "on duty"]))
+        .filter(func.lower(Driver.status).in_(["assigned", "on trip", "busy", "on duty"]))
         .scalar() or 0
     )
 
     total_trips = db.query(func.count(Trip.id)).scalar() or 0
     completed_trips = (
         db.query(func.count(Trip.id))
-        .filter(Trip.trip_status == TripStatus.DELIVERED)
+        .filter(Trip.trip_status == TripStatus.DELIVERED.value)
         .scalar() or 0
     )
+
+    fuel_consumption = (
+        db.query(func.coalesce(func.sum(FuelRecord.fuel_quantity), 0.0)).scalar() or 0.0
+    )
+
+    maintenance_records = db.query(func.count(Maintenance.id)).scalar() or 0
 
     active_shipments = (
         db.query(func.count(Shipment.id))
@@ -142,5 +150,7 @@ def get_fleet_dashboard(
         assigned_drivers=assigned_drivers,
         total_trips=total_trips,
         completed_trips=completed_trips,
+        fuel_consumption=round(float(fuel_consumption), 2),
+        maintenance_records=int(maintenance_records),
         active_shipments=active_shipments,
     )

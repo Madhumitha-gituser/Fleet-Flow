@@ -76,6 +76,8 @@ class FleetDashboardResponse(BaseModel):
     assigned_drivers: int
     total_trips: int
     completed_trips: int
+    fuel_consumption: float
+    maintenance_records: int
     active_shipments: int
 
 
