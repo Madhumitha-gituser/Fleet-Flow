@@ -58,7 +58,10 @@ def fetch_trip(id: int, db: Session = Depends(get_db), current_user = Depends(ha
 @router.put("/{id}", response_model=TripResponse)
 def edit_trip(id: int, trip: TripUpdate, db: Session = Depends(get_db), current_user = Depends(has_role(["Admin", "Dispatcher"]))):
     res = trip_service.update_trip(id, trip, db)
-    log_action(db, action="UPDATE", resource="Trip", resource_id=res.id, details=f"Updated trip {res.id} status to {res.status.value if hasattr(res.status, 'value') else res.status}", user=current_user)
+    # `Trip` model uses `trip_status` column; avoid AttributeError by
+    # reading the value safely whether it's an Enum or a string.
+    status_val = res.trip_status if isinstance(res.trip_status, str) else res.trip_status.value
+    log_action(db, action="UPDATE", resource="Trip", resource_id=res.id, details=f"Updated trip {res.id} status to {status_val}", user=current_user)
     return res
 
 

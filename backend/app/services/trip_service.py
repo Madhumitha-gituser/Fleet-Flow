@@ -72,6 +72,18 @@ def _sync_driver_status_from_trip(trip: Trip, db: Session) -> None:
         new_status = "On Trip"
     elif trip_status_val in _DONE_STATUSES:
         new_status = "Available"
+        
+        # Also complete any active assignment for this trip so the driver/vehicle are truly freed
+        from app.models.driver_assignment import DriverAssignment, AssignmentStatus
+        assignment = db.query(DriverAssignment).filter(
+            DriverAssignment.trip_id == trip.id,
+            DriverAssignment.assignment_status == AssignmentStatus.ACTIVE.value
+        ).first()
+        if assignment:
+            logger.info("Auto-completing assignment %d because trip %d is %s", assignment.id, trip.id, trip_status_val)
+            assignment.assignment_status = AssignmentStatus.COMPLETED.value
+            db.add(assignment)
+
     # TripStatus.CREATED — no automatic override; leave driver status alone
 
     if new_status and driver.status != new_status:
