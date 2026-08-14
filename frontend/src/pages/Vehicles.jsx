@@ -421,7 +421,7 @@ export default function Vehicles() {
                     required
                   />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label" htmlFor="capacity">Capacity (kg)</label>
                     <input
@@ -452,7 +452,7 @@ export default function Vehicles() {
                     </select>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label" htmlFor="status">Fleet Status</label>
                     <select

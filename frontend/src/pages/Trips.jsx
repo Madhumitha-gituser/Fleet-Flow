@@ -457,7 +457,7 @@ export default function Trips() {
           />
 
           {selectedTrip && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+            <div className="form-grid" style={{ fontSize: '13px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
               <div>
                 <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>Pickup Point</span>
                 <strong>{selectedTrip.pickup_location}</strong>
@@ -548,7 +548,7 @@ export default function Trips() {
                   </select>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label className="form-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>Pickup Origin</label>
                     <input type="text" name="pickup_location" className="form-input" style={{ padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-card)', color: 'var(--text-main)' }} placeholder="E.g. Port Terminal A" value={formData.pickup_location} onChange={handleInputChange} required />
@@ -559,7 +559,7 @@ export default function Trips() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label className="form-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>Scheduled Start</label>
                     <input type="datetime-local" name="scheduled_start_time" className="form-input" style={{ padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-card)', color: 'var(--text-main)' }} value={formData.scheduled_start_time} onChange={handleInputChange} required />

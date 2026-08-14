@@ -421,7 +421,7 @@ export default function Shipments() {
                     <span>{submitError}</span>
                   </div>
                 )}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label" htmlFor="sender_name">Sender Name</label>
                     <input
@@ -449,7 +449,7 @@ export default function Shipments() {
                     />
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label" htmlFor="pickup_location">Source / Origin</label>
                     <input
@@ -477,7 +477,7 @@ export default function Shipments() {
                     />
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label" htmlFor="weight">Weight (kg)</label>
                     <input
@@ -511,7 +511,7 @@ export default function Shipments() {
                     </select>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label" htmlFor="assigned_vehicle_id">Assigned Vehicle</label>
                     <select

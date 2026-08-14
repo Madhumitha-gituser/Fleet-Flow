@@ -171,7 +171,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Grid: Data Tables & Actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.1fr', gap: '32px', alignItems: 'start' }}>
+      <div className="dashboard-grid">
         
         {/* Left Column: Recent Shipments DataGrid */}
         <section className="datagrid-container">
