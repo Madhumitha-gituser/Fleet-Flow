@@ -26,7 +26,7 @@ class Maintenance(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False, index=True)
 
     category = Column(
         SQLEnum(MaintenanceCategory, values_callable=lambda x: [e.value for e in x]),
@@ -43,6 +43,7 @@ class Maintenance(Base):
         SQLEnum(MaintenanceStatus, values_callable=lambda x: [e.value for e in x]),
         default=MaintenanceStatus.SCHEDULED,
         nullable=False,
+        index=True
     )
 
     notes = Column(Text, nullable=True)

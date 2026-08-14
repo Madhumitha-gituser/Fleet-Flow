@@ -106,10 +106,14 @@ def create_maintenance(payload: MaintenanceCreate, db: Session) -> Maintenance:
     return db_record
 
 
+from sqlalchemy.orm import joinedload
+from sqlalchemy import case
+
 def get_all_maintenance(db: Session) -> list[Maintenance]:
     """Return every maintenance record ordered by newest first."""
     return (
         db.query(Maintenance)
+        .options(joinedload(Maintenance.vehicle))
         .order_by(Maintenance.created_at.desc())
         .all()
     )
@@ -117,7 +121,13 @@ def get_all_maintenance(db: Session) -> list[Maintenance]:
 
 def get_maintenance_by_id(maintenance_id: int, db: Session) -> Maintenance:
     """Return a single maintenance record; 404 if not found."""
-    return _get_maintenance_or_404(maintenance_id, db)
+    record = db.query(Maintenance).options(joinedload(Maintenance.vehicle)).filter(Maintenance.id == maintenance_id).first()
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Maintenance record with id {maintenance_id} not found.",
+        )
+    return record
 
 
 def get_maintenance_by_vehicle(vehicle_id: int, db: Session) -> list[Maintenance]:
@@ -130,6 +140,7 @@ def get_maintenance_by_vehicle(vehicle_id: int, db: Session) -> list[Maintenance
     _get_vehicle_or_404(vehicle_id, db)
     return (
         db.query(Maintenance)
+        .options(joinedload(Maintenance.vehicle))
         .filter(Maintenance.vehicle_id == vehicle_id)
         .order_by(Maintenance.created_at.desc())
         .all()
@@ -251,36 +262,28 @@ def cancel_maintenance(maintenance_id: int, db: Session) -> Maintenance:
 
 
 def get_maintenance_report(db: Session) -> MaintenanceReportResponse:
-    total_maintenance_records = db.query(func.count(Maintenance.id)).scalar() or 0
-
-    vehicles_under_maintenance = (
-        db.query(func.count(func.distinct(Maintenance.vehicle_id)))
-        .filter(Maintenance.status == MaintenanceStatus.IN_PROGRESS)
-        .scalar()
-        or 0
-    )
-
-    completed_services = (
-        db.query(func.count(Maintenance.id))
-        .filter(Maintenance.status == MaintenanceStatus.COMPLETED)
-        .scalar()
-        or 0
-    )
-
     today = date.today()
-    overdue_services = (
-        db.query(func.count(Maintenance.id))
-        .filter(
-            Maintenance.next_service_date.isnot(None),
-            Maintenance.next_service_date < today,
-            Maintenance.status.notin_([MaintenanceStatus.COMPLETED, MaintenanceStatus.CANCELLED]),
-        )
-        .scalar()
-        or 0
-    )
-
-    total_cost = db.query(func.coalesce(func.sum(Maintenance.service_cost), 0.0)).scalar() or 0.0
-
+    
+    aggs = db.query(
+        func.count(Maintenance.id).label("total"),
+        func.count(func.distinct(
+            case((Maintenance.status == MaintenanceStatus.IN_PROGRESS, Maintenance.vehicle_id), else_=None)
+        )).label("vehicles_in_progress"),
+        func.sum(case((Maintenance.status == MaintenanceStatus.COMPLETED, 1), else_=0)).label("completed"),
+        func.sum(case((
+            (Maintenance.next_service_date.isnot(None)) & 
+            (Maintenance.next_service_date < today) & 
+            (Maintenance.status.notin_([MaintenanceStatus.COMPLETED, MaintenanceStatus.CANCELLED])), 1), 
+            else_=0)).label("overdue"),
+        func.coalesce(func.sum(Maintenance.service_cost), 0.0).label("total_cost")
+    ).first()
+    
+    total_maintenance_records = aggs.total or 0
+    vehicles_under_maintenance = aggs.vehicles_in_progress or 0
+    completed_services = aggs.completed or 0
+    overdue_services = aggs.overdue or 0
+    total_cost = aggs.total_cost or 0.0
+    
     frequent_category_row = (
         db.query(Maintenance.category, func.count(Maintenance.id).label("category_count"))
         .group_by(Maintenance.category)

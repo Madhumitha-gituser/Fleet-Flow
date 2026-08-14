@@ -26,12 +26,12 @@ class Shipment(Base):
     receiver_name = Column(String(100), nullable=False)
     pickup_location = Column(String(100), nullable=False)
     delivery_location = Column(String(100), nullable=False)
-    current_status = Column(SQLEnum(ShipmentStatus, values_callable=lambda obj: [e.value for e in obj]), default=ShipmentStatus.CREATED, nullable=False)
+    current_status = Column(SQLEnum(ShipmentStatus, values_callable=lambda obj: [e.value for e in obj]), default=ShipmentStatus.CREATED, nullable=False, index=True)
     weight = Column(Float, nullable=True)
     created_date = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    assigned_driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True)
-    assigned_vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=True)
+    assigned_driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True, index=True)
+    assigned_vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=True, index=True)
 
     driver = relationship("Driver")
     vehicle = relationship("Vehicle", back_populates="shipments")

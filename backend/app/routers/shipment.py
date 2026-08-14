@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -49,16 +50,8 @@ def add_shipment(
         if not driver:
             raise HTTPException(status_code=404, detail="Driver not found")
 
-    # Generate a unique tracking number sequentially (e.g., FLT100001, FLT100002, ...)
-    last_shipment = db.query(Shipment).filter(Shipment.tracking_number.like("FLT%")).order_by(Shipment.id.desc()).first()
-    if last_shipment and last_shipment.tracking_number:
-        try:
-            num_part = int(last_shipment.tracking_number[3:])
-            new_tracking = f"FLT{num_part + 1:06d}"
-        except (ValueError, TypeError):
-            new_tracking = "FLT100001"
-    else:
-        new_tracking = "FLT100001"
+    # Generate a unique tracking number using a short UUID
+    new_tracking = f"FLT{uuid.uuid4().hex[:6].upper()}"
 
     db_shipment = Shipment(
         tracking_number=new_tracking,
