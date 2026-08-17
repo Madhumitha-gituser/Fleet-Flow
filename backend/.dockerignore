@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------------------
+# backend/.dockerignore
+# Excludes files that must not be copied into the Docker build context.
+# This keeps the image small and avoids leaking local secrets.
+# ---------------------------------------------------------------------------
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments — never ship these into the image
+.venv/
+venv/
+env/
+pip_cache/
+
+# Local secrets — NEVER bake .env into the image
+.env
+.env.*
+!.env.example
+
+# Test / linting artefacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.log
+
+# Alembic migration cache (migrations themselves ARE included)
+# alembic/versions/ is needed — only exclude compiled artefacts
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git history — not needed in the image
+.git/
+.gitignore
+
+# Local development helper scripts (not part of the application)
+check_db.py
+clean_db.py
+debug_enum.py
+inspect_enum.py
+migrate_enum.py
+restore_column_type.py
+seed_db.py
+conftest.py
+pytest.ini
+test_maintenance.py
+test_shipment_query.py
+tests/
+
+# pip cache directory created during local installs
+pip_cache/

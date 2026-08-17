@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,14 +28,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger("fleetflow")
 
-ALLOWED_ORIGINS = [
+# ---------------------------------------------------------------------------
+# CORS allowed origins
+# ---------------------------------------------------------------------------
+# In production, set CORS_ALLOWED_ORIGINS to the deployed frontend URL, e.g.:
+#   CORS_ALLOWED_ORIGINS=https://fleetflow.example.com
+# Multiple origins can be separated by commas:
+#   CORS_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
+# The localhost entries are kept as fallback for local development.
+_DEFAULT_DEV_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://localhost",
+    "http://localhost:80",
 ]
+
+_env_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+ALLOWED_ORIGINS: list[str] = (
+    [o.strip() for o in _env_origins.split(",") if o.strip()]
+    if _env_origins.strip()
+    else _DEFAULT_DEV_ORIGINS
+)
 
 app = FastAPI(
     title="FleetFlow API",

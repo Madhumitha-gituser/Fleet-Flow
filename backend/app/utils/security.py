@@ -1,3 +1,5 @@
+import os
+
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -7,8 +9,11 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.user import User
 
-# Secret key (change this in production)
-SECRET_KEY = "fleetflow_secret_key"
+# Read the JWT secret from the environment.
+# JWT_SECRET_KEY must be set to a strong random value in production.
+# The fallback is kept ONLY for local development convenience;
+# docker-compose always injects JWT_SECRET_KEY.
+SECRET_KEY: str = os.environ.get("JWT_SECRET_KEY", "fleetflow_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
 
