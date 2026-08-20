@@ -22,9 +22,11 @@ WORKDIR /app
 
 # ---------- Python dependencies ---------------------------------------------
 # Copy requirements first so Docker can cache this layer when source changes.
-COPY requirements.txt .
+# requirements.docker.txt is identical to requirements.txt but without
+# Windows-only packages (pywin32, pylance) that cannot install on Linux.
+COPY requirements.docker.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements.docker.txt
 
 # ---------- Application source ----------------------------------------------
 # Copy the entire backend directory content into /app

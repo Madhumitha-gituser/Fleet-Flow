@@ -13,7 +13,6 @@ cffi==2.0.0
 charset-normalizer==3.4.4
 click==8.3.0
 cloudpickle==3.1.2
-colorama==0.4.6
 cryptography==46.0.3
 distlib==0.4.0
 dnspython==2.8.0
@@ -100,14 +99,12 @@ pydantic==2.12.4
 pydantic-settings==2.11.0
 pydantic_core==2.41.5
 PyJWT==2.10.1
-pylance==7.0.0
 pyparsing==3.2.5
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 python-jose==3.5.0
 python-multipart==0.0.20
 pytz==2025.2
-pywin32==311
 PyYAML==6.0.3
 referencing==0.37.0
 requests==2.32.5
