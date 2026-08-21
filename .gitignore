@@ -12,7 +12,11 @@ pip-delete-this-directory.txt
 
 # Databases & local configs
 backend/.env
+frontend/.env
 .env
+.env.local
+.env.*.local
+docker-compose.override.yml
 
 # Frontend builds & packages
 frontend/node_modules/

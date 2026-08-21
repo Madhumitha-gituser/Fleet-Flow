@@ -1,0 +1,2 @@
+# Keep shell scripts Unix-safe on Windows checkouts (Docker ENTRYPOINT).
+backend/docker-entrypoint.sh text eol=lf
