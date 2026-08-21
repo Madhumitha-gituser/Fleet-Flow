@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
-from app.utils.security import has_role
+from app.utils.security import has_role, normalize_role
 from app.utils.audit_log import log_action
 
 router = APIRouter(
@@ -40,7 +40,7 @@ def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_d
             
     db_user.name = user_data.name
     db_user.email = user_data.email
-    db_user.role = user_data.role
+    db_user.role = normalize_role(user_data.role) or user_data.role
     db.commit()
     db.refresh(db_user)
     log_action(db, action="UPDATE", resource="User", resource_id=db_user.id, details=f"Updated user {db_user.email} (Name: {db_user.name}, Role: {db_user.role})", user=current_user)

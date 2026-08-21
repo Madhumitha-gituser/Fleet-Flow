@@ -4,7 +4,7 @@
  * Custom React hook for real-time trip tracking via WebSocket.
  *
  * Connects to:
- *   ws://localhost:8000/ws/tracking/{tripId}?token=<jwt>
+ *   {WS_BASE_URL}/ws/tracking/{tripId}?token=<jwt>
  *
  * Features
  * --------
@@ -27,7 +27,9 @@ import { useEffect, useRef, useCallback } from 'react'
 import { API_BASE_URL } from '../services/api'
 
 // Derive WebSocket base URL from the HTTP API base URL
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws')
+const WS_BASE_URL = API_BASE_URL
+  ? API_BASE_URL.replace(/^http/, 'ws')
+  : (typeof window !== 'undefined' ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}` : '')
 
 const MAX_RETRIES = 5
 const BASE_DELAY_MS = 2000   // start with 2 s, doubles each attempt

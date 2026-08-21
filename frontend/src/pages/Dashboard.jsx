@@ -81,7 +81,14 @@ export default function Dashboard() {
         shipments: shipmentsRes.data || [],
       })
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to connect to the server. Please check if the backend is running.'))
+      const status = err?.response?.status
+      if (status === 403) {
+        setError('Your account role is not allowed to load this dashboard data. Sign out and sign back in, or ask an admin to set your role to Admin or Fleet Manager.')
+      } else if (!err?.response) {
+        setError('Cannot reach the API. Start the backend, or set VITE_API_URL to your Render URL when deploying the frontend on Vercel.')
+      } else {
+        setError(getApiErrorMessage(err, 'Failed to load dashboard data.'))
+      }
     } finally {
       setLoading(false)
     }

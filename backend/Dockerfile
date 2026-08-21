@@ -1,50 +1,35 @@
 # ---------------------------------------------------------------------------
 # FleetFlow — Backend Dockerfile
 # ---------------------------------------------------------------------------
-# Uses Python 3.12-slim (matches psycopg2-binary and other binary wheels).
-# Secrets are never baked in; all configuration is injected through
-# environment variables at runtime.
+# Python 3.12-slim. Secrets are injected at runtime, never baked in.
+# requirements.docker.txt is the Linux production set (no Windows-only packages
+# and without unused ML/Google SDKs that bloated/broke image builds).
 # ---------------------------------------------------------------------------
 
 FROM python:3.12-slim
 
-# ---------- OS-level dependencies needed by psycopg2-binary ----------------
-# libpq-dev is NOT required for the binary wheel but some OS stubs are.
-# We keep the layer small by cleaning apt caches.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------- Working directory -----------------------------------------------
 WORKDIR /app
 
-# ---------- Python dependencies ---------------------------------------------
-# Copy requirements first so Docker can cache this layer when source changes.
-# requirements.docker.txt is identical to requirements.txt but without
-# Windows-only packages (pywin32, pylance) that cannot install on Linux.
 COPY requirements.docker.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.docker.txt
 
-# ---------- Application source ----------------------------------------------
-# Copy the entire backend directory content into /app
 COPY . .
 
-# ---------- Runtime configuration ------------------------------------------
-# DATABASE_URL, JWT_SECRET_KEY, ORS_API_KEY, CORS_ALLOWED_ORIGINS, CELERY_*
-# and all other secrets are provided via docker-compose environment or a
-# runtime secret manager. Do NOT hardcode values here.
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint.sh
 
-# Uvicorn listens on all interfaces inside the container.
 ENV HOST=0.0.0.0
 ENV PORT=8000
+ENV ENVIRONMENT=production
 
-# ---------- Port exposure ---------------------------------------------------
 EXPOSE 8000
 
-# ---------- Entrypoint ------------------------------------------------------
-# app.main:app  — matches the existing FastAPI application object in app/main.py
-# --host / --port read from ENV so they can be overridden without rebuilding.
-CMD ["sh", "-c", "uvicorn app.main:app --host $HOST --port $PORT"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["sh", "-c", "uvicorn app.main:app --host ${HOST} --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]

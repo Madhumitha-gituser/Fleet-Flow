@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { getStoredUser } from '../services/api'
+import { hasAllowedRole } from '../utils/roles'
 
 export default function ProtectedRoute({ allowedRoles }) {
   const token = localStorage.getItem('fleetflow_token')
@@ -10,8 +11,7 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   if (allowedRoles) {
     const user = getStoredUser()
-    const userRole = user?.role
-    if (!userRole || !allowedRoles.includes(userRole)) {
+    if (!hasAllowedRole(user?.role, allowedRoles)) {
       return <Navigate to="/403" replace />
     }
   }

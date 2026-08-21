@@ -1,10 +1,12 @@
 import axios from 'axios'
 
-// Read from .env (VITE_API_BASE_URL=http://127.0.0.1:8000)
-// Vite replaces import.meta.env.* at build time; the fallback ensures the
-// app still works if the variable is accidentally omitted from .env.
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+// Public API origin. Empty string = same origin (used by Docker/Nginx).
+// Local Vite: set VITE_API_URL=http://127.0.0.1:8000 in frontend/.env
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  ''
+).replace(/\/$/, '')
 
 const api = axios.create({
   baseURL: API_BASE_URL,

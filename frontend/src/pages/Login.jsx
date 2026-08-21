@@ -78,12 +78,12 @@ export default function Login() {
               email: decoded.sub,
               role: decoded.role,
             })
-            const userRole = decoded.role
-            if (userRole === 'Admin' || userRole === 'Fleet Manager') {
+            const userRole = String(decoded.role || '').trim().toLowerCase()
+            if (userRole === 'admin' || userRole === 'fleet manager') {
               navigate('/dashboard', { replace: true })
-            } else if (userRole === 'Dispatcher') {
+            } else if (userRole === 'dispatcher') {
               navigate('/shipments', { replace: true })
-            } else if (userRole === 'Driver') {
+            } else if (userRole === 'driver') {
               navigate('/trips', { replace: true })
             } else {
               navigate('/dashboard', { replace: true })

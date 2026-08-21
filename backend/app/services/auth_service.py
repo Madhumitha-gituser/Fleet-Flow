@@ -7,6 +7,7 @@ from app.utils.security import (
     hash_password,
     verify_password,
     create_access_token,
+    normalize_role,
 )
 
 
@@ -39,7 +40,7 @@ def register_user(user: UserCreate, db: Session):
         name=user.name,
         email=user.email,
         password=hashed_password,
-        role=user.role
+        role=normalize_role(user.role) or user.role,
     )
 
     db.add(new_user)
@@ -67,7 +68,7 @@ def login_user(user: UserLogin, db: Session):
     access_token = create_access_token(
         data={
             "sub": db_user.email,
-            "role": db_user.role
+            "role": normalize_role(db_user.role) or db_user.role,
         }
     )
 

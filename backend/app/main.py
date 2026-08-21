@@ -1,9 +1,13 @@
+from dotenv import load_dotenv
+
+load_dotenv()
 import logging
 import os
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.routers import auth, driver, vehicle, trip, users
 from app.routers.shipment import router as shipment_router
@@ -31,11 +35,9 @@ logger = logging.getLogger("fleetflow")
 # ---------------------------------------------------------------------------
 # CORS allowed origins
 # ---------------------------------------------------------------------------
-# In production, set CORS_ALLOWED_ORIGINS to the deployed frontend URL, e.g.:
-#   CORS_ALLOWED_ORIGINS=https://fleetflow.example.com
-# Multiple origins can be separated by commas:
-#   CORS_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
-# The localhost entries are kept as fallback for local development.
+# Local Vite + Docker Compose origins. Production origins come from
+# CORS_ALLOWED_ORIGINS and/or FRONTEND_URL (never use allow_origins=["*"]
+# with credentials).
 _DEFAULT_DEV_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -45,14 +47,31 @@ _DEFAULT_DEV_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost",
     "http://localhost:80",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
 ]
 
+
+def _split_origins(*raw_values: str) -> list[str]:
+    origins: list[str] = []
+    for raw in raw_values:
+        for item in (raw or "").split(","):
+            origin = item.strip().rstrip("/")
+            if origin:
+                origins.append(origin)
+    # Preserve order, drop duplicates
+    return list(dict.fromkeys(origins))
+
+
 _env_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
-ALLOWED_ORIGINS: list[str] = (
-    [o.strip() for o in _env_origins.split(",") if o.strip()]
-    if _env_origins.strip()
-    else _DEFAULT_DEV_ORIGINS
-)
+_frontend_url = os.environ.get("FRONTEND_URL", "")
+_configured = _split_origins(_env_origins, _frontend_url)
+
+_environment = os.environ.get("ENVIRONMENT", "development").lower()
+if _environment in ("production", "prod"):
+    ALLOWED_ORIGINS: list[str] = _configured or _DEFAULT_DEV_ORIGINS
+else:
+    ALLOWED_ORIGINS = _split_origins(*_DEFAULT_DEV_ORIGINS, *_configured)
 
 app = FastAPI(
     title="FleetFlow API",
@@ -158,4 +177,21 @@ app.include_router(ws_router)
 @app.get("/")
 def home():
     return {"message": "FleetFlow Backend Running Successfully"}
+
+
+@app.get("/health")
+def health():
+    """Liveness/readiness probe. Does not expose connection strings or secrets."""
+    database = "down"
+    try:
+        from app.database import engine
+
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        database = "up"
+    except Exception:
+        logger.warning("Health check: database is unreachable")
+
+    payload = {"status": "ok" if database == "up" else "degraded", "database": database}
+    return JSONResponse(content=payload, status_code=200 if database == "up" else 503)
 
